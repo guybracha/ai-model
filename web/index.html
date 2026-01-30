@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="he">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Model UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    input { padding: 10px; font-size: 16px; }
+    button { padding: 10px 14px; font-size: 16px; cursor: pointer; margin-top: 12px; }
+    pre { background: #f5f5f5; padding: 12px; border-radius: 8px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Model Inference (Dense + ReLU)</h1>
+
+  <p>הכנס 4 מספרים (x0..x3):</p>
+  <div class="row">
+    <input id="x0" value="1" />
+    <input id="x1" value="-2" />
+    <input id="x2" value="0.5" />
+    <input id="x3" value="3" />
+  </div>
+
+  <button id="run">Run</button>
+
+  <h3>Output</h3>
+  <pre id="out">לחץ Run...</pre>
+
+  <script>
+    const out = document.getElementById("out");
+
+    document.getElementById("run").addEventListener("click", async () => {
+      const x = [
+        Number(document.getElementById("x0").value),
+        Number(document.getElementById("x1").value),
+        Number(document.getElementById("x2").value),
+        Number(document.getElementById("x3").value),
+      ];
+
+      if (x.some(v => Number.isNaN(v))) {
+        out.textContent = "שגיאה: כל הערכים חייבים להיות מספרים.";
+        return;
+      }
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ x })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          out.textContent = "Error: " + JSON.stringify(data, null, 2);
+          return;
+        }
+
+        out.textContent = "y = " + JSON.stringify(data.y);
+      } catch (e) {
+        out.textContent = "לא הצלחתי להתחבר לשרת. ודא ש-server.py רץ.\n" + e;
+      }
+    });
+  </script>
+</body>
+</html>
